@@ -37,7 +37,7 @@
     }
 
     .container {
-      background: var(--surface);
+      background: var(--muted-bg);
       border-radius: var(--radius);
       padding: 24px;
       max-width: 840px;
@@ -94,6 +94,7 @@
       font-size: 16px;
       line-height: 1.5;
       font-family: inherit;
+      transition: border-color 0.2s ease;
     }
 
     textarea:focus {
@@ -118,7 +119,7 @@
       border-radius: 12px;
       cursor: pointer;
       color: #fff;
-      width: 48%;
+      flex: 1;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -145,6 +146,7 @@
       font-size: 15px;
       min-height: 22px;
       opacity: 0;
+      transition: opacity 0.3s ease;
     }
 
     .copy-feedback.show {
@@ -152,17 +154,23 @@
     }
 
     .rules-modal {
-      display: none;
       position: fixed;
       inset: 0;
       z-index: 1000;
       background: rgba(0, 0, 0, .55);
+      display: flex;
       align-items: center;
       justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, visibility 0.25s;
     }
 
     .rules-modal.show {
-      display: flex;
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
     }
 
     .rules-content {
@@ -174,6 +182,12 @@
       border-radius: 16px;
       padding: 24px;
       overflow: auto;
+      transform: scale(0.96);
+      transition: transform 0.25s ease;
+    }
+
+    .rules-modal.show .rules-content {
+      transform: scale(1);
     }
 
     .rules-header {
@@ -243,6 +257,13 @@
       font-weight: 700;
     }
 
+    .char-count {
+      color: var(--subtext);
+      font-size: 13px;
+      margin-top: 6px;
+      text-align: right;
+    }
+
     @media (min-width: 768px) {
       body {
         padding: 30px;
@@ -265,13 +286,14 @@
 
     <div class="input-section">
       <label for="input">Український Текст</label>
-      <textarea id="input" placeholder="Вставте український текст тут..." autocomplete="off" autocorrect="off"
+      <textarea id="input" autofocus placeholder="Вставте український текст тут..." autocomplete="off" autocorrect="off"
         spellcheck="false"></textarea>
+      <div class="char-count" id="charCount">0 символів</div>
     </div>
 
     <div class="output-section">
       <label for="output">Транслітерований Текст</label>
-      <textarea id="output" readonly></textarea>
+      <textarea id="output" readonly placeholder="Транслітерований текст з'явиться тут..."></textarea>
     </div>
 
     <div class="button-group">
@@ -305,10 +327,6 @@
       'Ю': 'Ju', 'ю': 'ju', 'Я': 'Ja', 'я': 'ja', 'Ь': 'J', 'ь': 'j'
     };
 
-    // Fix typo in replacements (remove space from ' Ї' key)
-    delete replacements[' Ї'];
-    replacements['Ї'] = 'Ji';
-
     const inputBox = document.getElementById('input');
     const outputBox = document.getElementById('output');
     const copyBtn = document.getElementById('copyBtn');
@@ -337,10 +355,22 @@
       return [...text].map(ch => replacements[ch] ?? ch).join('');
     }
 
+    function pluralize(n) {
+      const mod10 = n % 10;
+      const mod100 = n % 100;
+      if (mod10 === 1 && mod100 !== 11) return '';
+      if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'и';
+      return 'ів';
+    }
+
+    const charCount = document.getElementById('charCount');
+
     function updateOutput() {
       const translit = transliterate(inputBox.value);
       outputBox.value = translit;
       copyBtn.disabled = !translit;
+      const len = inputBox.value.length;
+      charCount.textContent = len + ' символ' + pluralize(len);
     }
 
     // Live update on input

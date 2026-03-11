@@ -10,12 +10,17 @@
   <style>
     :root {
       --accent: #667eea;
+      --accent-hover: #7b91f7;
+      --accent-glow: rgba(102, 126, 234, 0.15);
       --surface: #0f1115;
       --text: #f3f4f6;
       --subtext: #cbd5e1;
       --muted-bg: #171a21;
+      --muted-bg-light: #1c2029;
       --border: #2a2f3a;
+      --border-light: #353b48;
       --success: #48bb78;
+      --success-hover: #5ccf8b;
       --radius: 12px;
     }
 
@@ -30,6 +35,7 @@
       background: var(--surface);
       color: var(--text);
       min-height: 100vh;
+      min-height: 100dvh;
       padding: 16px;
       display: flex;
       align-items: center;
@@ -42,17 +48,39 @@
       padding: 24px;
       max-width: 840px;
       width: 100%;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), #a78bfa, var(--accent));
+      background-size: 200% 100%;
+      animation: shimmer 6s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
 
     .header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 18px;
+      margin-bottom: 22px;
+      padding-top: 4px;
     }
 
     h1 {
       font-size: clamp(20px, 2.6vw, 30px);
+      letter-spacing: -0.02em;
     }
 
     .rules-icon {
@@ -67,6 +95,18 @@
       font-size: 18px;
       display: grid;
       place-items: center;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      position: relative;
+    }
+
+    .rules-icon:hover {
+      background: var(--accent-hover);
+      transform: scale(1.08);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .rules-icon:active {
+      transform: scale(0.95);
     }
 
     .input-section,
@@ -80,6 +120,7 @@
       font-weight: 700;
       margin-bottom: 8px;
       font-size: 15px;
+      letter-spacing: 0.01em;
     }
 
     textarea {
@@ -89,17 +130,27 @@
       padding: 14px;
       border: 1.5px solid var(--border);
       border-radius: 12px;
-      background: var(--muted-bg);
+      background: var(--surface);
       color: var(--text);
       font-size: 16px;
       line-height: 1.5;
       font-family: inherit;
-      transition: border-color 0.2s ease;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
 
     textarea:focus {
       outline: none;
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    textarea::placeholder {
+      color: #4a5060;
+    }
+
+    #output {
+      background: var(--muted-bg-light);
+      border-style: dashed;
     }
 
     .button-group {
@@ -108,8 +159,6 @@
       margin: 18px 0;
     }
 
-    /* Only style the main action buttons inside the .button-group so
-       they don't interfere with small icon buttons like .rules-icon */
     .button-group button {
       padding: 14px 16px;
       min-height: 50px;
@@ -123,20 +172,36 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+
+    .button-group button:active {
+      transform: scale(0.97);
     }
 
     #copyBtn {
       background: var(--success);
     }
 
+    #copyBtn:hover:not(:disabled) {
+      background: var(--success-hover);
+      box-shadow: 0 4px 14px rgba(72, 187, 120, 0.3);
+    }
+
     #copyBtn:disabled {
-      background: #9aa0a6;
+      background: #2a2f3a;
+      color: #555b66;
       cursor: not-allowed;
-      opacity: .7;
+      opacity: 1;
     }
 
     #clearBtn {
       background: var(--accent);
+    }
+
+    #clearBtn:hover {
+      background: var(--accent-hover);
+      box-shadow: 0 4px 14px var(--accent-glow);
     }
 
     .copy-feedback {
@@ -146,11 +211,13 @@
       font-size: 15px;
       min-height: 22px;
       opacity: 0;
-      transition: opacity 0.3s ease;
+      transform: translateY(4px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
 
     .copy-feedback.show {
       opacity: 1;
+      transform: translateY(0);
     }
 
     .rules-modal {
@@ -158,6 +225,8 @@
       inset: 0;
       z-index: 1000;
       background: rgba(0, 0, 0, .55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -184,10 +253,24 @@
       overflow: auto;
       transform: scale(0.96);
       transition: transform 0.25s ease;
+      border: 1px solid var(--border);
     }
 
     .rules-modal.show .rules-content {
       transform: scale(1);
+    }
+
+    .rules-content::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .rules-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .rules-content::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px;
     }
 
     .rules-header {
@@ -212,6 +295,12 @@
       display: grid;
       place-items: center;
       cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .rules-close:hover {
+      background: var(--border);
+      color: var(--text);
     }
 
     .rules-content p {
@@ -234,6 +323,12 @@
       border-radius: 10px;
       text-align: center;
       border: 1.5px solid var(--border);
+      transition: border-color 0.2s, transform 0.15s;
+    }
+
+    .rule-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
     }
 
     .rule-item .from {
@@ -262,6 +357,11 @@
       font-size: 13px;
       margin-top: 6px;
       text-align: right;
+      transition: color 0.2s;
+    }
+
+    .char-count.has-text {
+      color: var(--accent);
     }
 
     @media (min-width: 768px) {
@@ -371,6 +471,7 @@
       copyBtn.disabled = !translit;
       const len = inputBox.value.length;
       charCount.textContent = len + ' символ' + pluralize(len);
+      charCount.classList.toggle('has-text', len > 0);
     }
 
     // Live update on input
